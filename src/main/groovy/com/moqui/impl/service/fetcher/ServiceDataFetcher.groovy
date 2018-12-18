@@ -66,9 +66,9 @@ class ServiceDataFetcher extends BaseDataFetcher {
                 GraphQLSchemaUtil.transformArguments(environment.arguments, inputFieldsMap)
             }
             else {
-                GraphQLSchemaUtil.transformQueryServiceArguments(sd, environment.arguments, inputFieldsMap)
                 Map source = environment.source as Map<String, Object>
                 GraphQLSchemaUtil.transformQueryServiceRelArguments(source, relKeyMap, inputFieldsMap)
+                GraphQLSchemaUtil.transformQueryServiceArguments(sd, environment.arguments, inputFieldsMap)
             }
 
             Map result
