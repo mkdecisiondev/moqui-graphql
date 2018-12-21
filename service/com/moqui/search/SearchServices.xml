@@ -14,7 +14,7 @@ along with this software (see the LICENSE.md file). If not, see
 -->
 <services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-2.1.xsd">
 
-    <service verb="search" noun="DataDocumentsByJson">
+    <service verb="search" noun="DataDocumentsByJson" type="script" location="component://moqui-graphql/src/main/groovy/scripts/SearchDataDocumentsByJson.groovy">
         <description>
             This service is similiar to org.moqui.search.SearchServices.search#DataDocuments, but with query json instead
         </description>
@@ -41,88 +41,6 @@ along with this software (see the LICENSE.md file). If not, see
             <parameter name="documentListPageRangeLow" type="Integer"/>
             <parameter name="documentListPageRangeHigh" type="Integer"/>
         </out-parameters>
-        <actions><script><![CDATA[
-            /* useful docs for query API: http://www.elasticsearch.org/guide/reference/api/search/uri-request/ */
-
-
-            import org.elasticsearch.client.Client
-            import org.elasticsearch.action.get.MultiGetItemResponse
-            import org.elasticsearch.action.get.MultiGetRequestBuilder
-            import org.elasticsearch.action.search.SearchRequestBuilder
-            import org.elasticsearch.index.query.QueryBuilder
-            import org.elasticsearch.index.query.QueryBuilders
-            import org.elasticsearch.search.SearchHit
-            import org.elasticsearch.search.SearchHits
-            import org.elasticsearch.search.sort.SortOrder
-            import org.moqui.context.ExecutionContext
-            import org.moqui.elasticsearch.ElasticSearchUtil
-
-            ExecutionContext ec = context.ec
-            Client elasticSearchClient = ec.getTool("ElasticSearch", Client.class)
-
-            fromOffset = pageIndex * pageSize
-            sizeLimit = pageSize
-
-            documentList = []
-
-            // make sure index exists
-            if (!ElasticSearchUtil.checkIndexExists(indexName, ec)) {
-                ec.loggerFacade.warn("Tried to search with indexName ${indexName} that does not exist, returning empty list")
-                documentListCount = 0
-                documentListPageIndex = pageIndex
-                documentListPageSize = pageSize
-                documentListPageMaxIndex = 0
-                documentListPageRangeLow = 0
-                documentListPageRangeHigh = 0
-                return
-            }
-
-            QueryBuilder queryBuilder = QueryBuilders.wrapperQuery((String) queryJson)
-
-            // get the search hits
-            SearchRequestBuilder srb = elasticSearchClient.prepareSearch().setIndices(indexName)
-                    .setQuery(queryBuilder).setFrom(fromOffset).setSize(sizeLimit)
-                    .setFetchSource(true)
-            if (documentType) srb.setTypes(((String) documentType).split(","))
-            for (String orderByField in orderByFields) {
-                boolean ascending = true
-                if (orderByField.charAt(0) == '-') {
-                    ascending = false
-                    orderByField = orderByField.substring(1)
-                } else if (orderByField.charAt(0) == '+') {
-                    ascending = true
-                    orderByField = orderByField.substring(1)
-                }
-                // ec.logger.warn("========= adding ${orderByField}, ${ascending}")
-                srb.addSort(orderByField, ascending ? SortOrder.ASC : SortOrder.DESC)
-            }
-
-            SearchHits hits = srb.execute().actionGet().getHits()
-            for (SearchHit hit in hits) {
-                Map document = hit.getSource()
-                // As of ES 2.0 _index, _type, _id aren't included in the document
-                document._index = hit.getIndex()
-                document._type = hit.getType()
-                document._id = hit.getId()
-                // how to get timestamp? doesn't seem to be in API: document._timestamp = hit.get?
-                document._version = hit.getVersion()
-                documentList.add(flattenDocument ? flattenNestedMap(document) : document)
-            }
-
-            // get the total search count
-            SearchRequestBuilder countSrb = elasticSearchClient.prepareSearch().setIndices(indexName)
-                    .setQuery(queryBuilder).setSize(0)
-            if (documentType) countSrb.setTypes(((String) documentType).split(","))
-            documentListCount = countSrb.execute().actionGet().getHits().getTotalHits()
-
-            // calculate the pagination values
-            documentListPageIndex = pageIndex
-            documentListPageSize = pageSize
-            documentListPageMaxIndex = ((BigDecimal) documentListCount - 1).divide(documentListPageSize, 0, BigDecimal.ROUND_DOWN) as int
-            documentListPageRangeLow = documentListPageIndex * documentListPageSize + 1
-            documentListPageRangeHigh = (documentListPageIndex * documentListPageSize) + documentListPageSize
-            if (documentListPageRangeHigh > documentListCount) documentListPageRangeHigh = documentListCount
-            ]]></script></actions>
     </service>
    
 </services>
