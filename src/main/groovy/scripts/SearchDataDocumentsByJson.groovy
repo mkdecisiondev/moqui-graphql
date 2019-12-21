@@ -1,12 +1,9 @@
 import org.elasticsearch.action.search.SearchRequest
 import org.elasticsearch.index.query.QueryBuilder
 import org.elasticsearch.index.query.QueryBuilders
-import org.elasticsearch.search.SearchHit
-import org.elasticsearch.search.SearchHits
 import org.elasticsearch.search.sort.SortOrder
+import org.moqui.context.ElasticFacade
 import org.moqui.context.ExecutionContext
-import org.moqui.elasticsearch.ElasticSearchUtil
-import org.moqui.elasticsearch.EsClient
 
 ExecutionContext ec = context.ec
 String indexName = context.indexName
@@ -14,7 +11,7 @@ String documentType = context.documentType
 String queryJson = context.queryJson
 Integer fromOffset = context.fromOffset
 Integer sizeLimit = context.sizeLimit
-EsClient elasticSearchClient = ec.getTool("ElasticSearch", EsClient.class)
+ElasticFacade.ElasticClient elasticSearchClient = ec.elastic.default
 
 fromOffset = pageIndex * pageSize
 sizeLimit = pageSize
@@ -22,8 +19,8 @@ sizeLimit = pageSize
 documentList = []
 
 // make sure index exists
-if (!ElasticSearchUtil.checkIndexExists(indexName, ec)) {
-	ec.loggerFacade.warn("Tried to search with indexName ${indexName} that does not exist, returning empty list")
+if (!elasticSearchClient.indexExists(indexName)) {
+	ec.logger.warn("Tried to search with indexName ${indexName} that does not exist, returning empty list")
 	documentListCount = 0
 	documentListPageIndex = pageIndex
 	documentListPageSize = pageSize
@@ -52,17 +49,16 @@ for (String orderByField in orderByFields) {
 	// ec.logger.warn("========= adding ${orderByField}, ${ascending}")
 	searchRequest.source().sort(orderByField, ascending ? SortOrder.ASC : SortOrder.DESC)
 }
+def sourceMap = elasticSearchClient.jsonToObject(searchRequest.source().toString()) as Map
 
-SearchHits hits = elasticSearchClient.search(searchRequest).getHits()
-documentListCount = hits.getTotalHits()
-for (SearchHit hit in hits) {
-	Map document = hit.getSourceAsMap()
-	// As of ES 2.0 _index, _type, _id aren't included in the document
-	document._index = hit.getIndex()
-	document._type = hit.getType()
-	document._id = hit.getId()
-	// how to get timestamp? doesn't seem to be in API: document._timestamp = hit.get?
-	document._version = hit.getVersion()
+def hits = elasticSearchClient.search(indexName, sourceMap).hits
+documentListCount = hits.total?.value
+
+for (hit in hits.hits) {
+	Map document = hit._source
+	document._index = hit._index
+	document._id = hit._id
+	document._version = hit._version
 	documentList.add(flattenDocument ? flattenNestedMap(document) : document)
 }
 
