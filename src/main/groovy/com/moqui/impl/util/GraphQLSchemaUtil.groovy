@@ -423,10 +423,6 @@ class GraphQLSchemaUtil {
                     case "service-fetcher":
                         fieldDef.setDataFetcher(new ServiceDataFetcher(childNode, fieldDef, ecf))
                         break
-                    case "pre-fetcher":
-                        break
-                    case "post-fetcher":
-                        break
                 }
             }
         } else {
@@ -439,8 +435,8 @@ class GraphQLSchemaUtil {
         switch (javaType) {
             case "String": return value as String
             case "CharSequence": return value as String
-            case "Date": break  //TODO
-            case "Time": break  //TODO
+            case "Date": true; break  //TODO
+            case "Time": true; break  //TODO
             case "Timestamp": return value as Timestamp
             case "Integer": return value as Integer
             case "Long": return value as Long
