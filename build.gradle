@@ -10,7 +10,10 @@ version = componentNode.@version
 // to run use "gradle dependencyUpdates"
 apply plugin: 'com.github.ben-manes.versions'
 buildscript {
-  repositories { jcenter() }
+  repositories {
+      mavenCentral()
+      gradlePluginPortal()
+  }
   dependencies { classpath 'com.github.ben-manes:gradle-versions-plugin:0.13.0' }
 }
 
@@ -23,8 +26,7 @@ dependencyUpdates.resolutionStrategy = { componentSelection { rules -> rules.all
 repositories {
     flatDir name: 'frameworkLib', dirs: frameworkDir.absolutePath + '/lib'
     //flatDir name: 'localLib', dirs: projectDir.absolutePath + '/lib'
-    jcenter()
-    maven { url "http://dl.bintray.com/andimarek/graphql-java" }
+    mavenCentral()
 }
 
 dependencies {
