@@ -1,7 +1,5 @@
 apply plugin: 'groovy'
 
-sourceCompatibility = '1.8'
-
 def moquiDir = file(projectDir.absolutePath + '/../../..')
 def frameworkDir = file(moquiDir.absolutePath + '/framework')
 def componentNode = parseComponent(project)
@@ -14,10 +12,10 @@ buildscript {
       mavenCentral()
       gradlePluginPortal()
   }
-  dependencies { classpath 'com.github.ben-manes:gradle-versions-plugin:0.13.0' }
+  dependencies { classpath 'com.github.ben-manes:gradle-versions-plugin:0.42.0' }
 }
 
-dependencyUpdates.resolutionStrategy = { componentSelection { rules -> rules.all { ComponentSelection selection ->
+dependencyUpdates.resolutionStrategy { componentSelection { rules -> rules.all { ComponentSelection selection ->
     boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm'].any { qualifier -> selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/ }
     if (rejected) selection.reject('Release candidate')
 } } }
@@ -30,17 +28,16 @@ repositories {
 }
 
 dependencies {
-    compile project(':framework')
+    implementation project(':framework')
     implementation 'org.elasticsearch.client:transport:7.5.1'
 
-    compile 'com.graphql-java:graphql-java:4.2'
-    compile 'org.antlr:antlr4-runtime:4.5.3'
+    implementation 'com.graphql-java:graphql-java:4.2'
+    implementation 'org.antlr:antlr4-runtime:4.5.3'
 
-    testCompile project(':framework').configurations.testCompile.allDependencies
+    testImplementation project(':framework').configurations.testImplementation.allDependencies
 }
 
 // by default the Java plugin runs test on build, change to not do that (only run test if explicit task)
-check.dependsOn.remove(test)
 task cleanLib(type: Delete) { delete fileTree(dir: projectDir.absolutePath+'/lib', include: '*') }
 clean.dependsOn cleanLib
 
@@ -53,7 +50,7 @@ jar {
 task copyDependencies {
     doLast {
         copy {
-            from(configurations.runtime - project(':framework').configurations.runtime - project(':framework').jar.archivePath)
+            from(configurations.runtimeClasspath - project(':framework').configurations.runtimeClasspath - project(':framework').jar.archivePath)
             into file(projectDir.absolutePath + '/lib')
         }
     }
