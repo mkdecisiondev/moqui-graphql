@@ -18,7 +18,7 @@ import graphql.ExceptionWhileDataFetching
 import graphql.ExecutionResult
 import graphql.GraphQL
 import graphql.GraphQLError
-import graphql.execution.batched.BatchedExecutionStrategy
+import graphql.execution.AsyncExecutionStrategy
 import graphql.language.Document
 import graphql.parser.Parser
 import groovy.transform.CompileStatic
@@ -113,7 +113,7 @@ class GraphQLApi {
             GraphQLSchemaDefinition.clearAllCachedGraphQLTypes()
 
             GraphQLSchemaDefinition schemaDef = new GraphQLSchemaDefinition(ecf, schemaNodeMap)
-            graphQL = new GraphQL(schemaDef.getSchema(), new BatchedExecutionStrategy())
+            graphQL = GraphQL.newGraphQL(schemaDef.getSchema()).queryExecutionStrategy(new AsyncExecutionStrategy()).build()
 
             lastLoadTime = System.currentTimeMillis()
             logger.info("Loaded GraphQL schema, in ${System.currentTimeMillis() - startTime}ms")

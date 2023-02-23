@@ -2,7 +2,6 @@ package com.moqui.impl.service.fetcher
 
 import com.moqui.graphql.GraphQLApi
 import com.moqui.impl.util.GraphQLSchemaUtil
-import graphql.execution.batched.BatchedDataFetcher
 import graphql.schema.DataFetchingEnvironment
 import org.moqui.context.ExecutionContext
 import org.moqui.context.ExecutionContextFactory
@@ -18,7 +17,7 @@ import org.slf4j.LoggerFactory
 
 import static com.moqui.impl.service.GraphQLSchemaDefinition.FieldDefinition
 
-class InterfaceBatchedDataFetcher extends BaseDataFetcher implements BatchedDataFetcher {
+class InterfaceBatchedDataFetcher extends BaseDataFetcher {
     protected final static Logger logger = LoggerFactory.getLogger(InterfaceBatchedDataFetcher.class)
 
     String primaryField

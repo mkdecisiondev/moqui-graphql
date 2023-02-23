@@ -1,4 +1,5 @@
 apply plugin: 'groovy'
+apply plugin: 'java'
 
 def moquiDir = file(projectDir.absolutePath + '/../../..')
 def frameworkDir = file(moquiDir.absolutePath + '/framework')
@@ -31,7 +32,7 @@ dependencies {
     implementation project(':framework')
     implementation 'org.elasticsearch.client:transport:7.5.1'
 
-    implementation 'com.graphql-java:graphql-java:4.2'
+    implementation 'com.graphql-java:graphql-java:19.0'
     implementation 'org.antlr:antlr4-runtime:4.5.3'
 
     testImplementation project(':framework').configurations.testImplementation.allDependencies

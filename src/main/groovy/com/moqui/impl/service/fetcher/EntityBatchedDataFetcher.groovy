@@ -2,7 +2,6 @@ package com.moqui.impl.service.fetcher
 
 import com.moqui.graphql.GraphQLApi
 import com.moqui.impl.util.GraphQLSchemaUtil
-import graphql.execution.batched.BatchedDataFetcher
 import graphql.schema.DataFetchingEnvironment
 import groovy.transform.CompileStatic
 import org.moqui.context.ExecutionContext
@@ -15,7 +14,7 @@ import org.moqui.util.MNode
 import static com.moqui.impl.service.GraphQLSchemaDefinition.FieldDefinition
 
 @CompileStatic
-class EntityBatchedDataFetcher extends BaseEntityDataFetcher implements BatchedDataFetcher {
+class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
     private boolean interfaceRequired
     
     EntityBatchedDataFetcher(MNode node, FieldDefinition fieldDef, ExecutionContextFactory ecf) {
