@@ -1,5 +1,6 @@
 package com.moqui.impl.service.fetcher
 
+import com.vladsch.flexmark.ast.Link
 import graphql.language.Field
 import graphql.language.FragmentSpread
 import graphql.language.InlineFragment
@@ -96,7 +97,7 @@ class DataFetcherUtils {
     }
 
 
-    private static EntityFind patchWithInCondition(EntityFind ef, List<Object> sourceItems, Map<String, String> relKeyMap) {
+    private static EntityFind patchWithInCondition(EntityFind ef, Map<String, Object> sourceItems, Map<String, String> relKeyMap) {
         if (relKeyMap.size() != 1)
             throw new IllegalArgumentException("pathWithIdsCondition should only be used when there is just one relationship key map")
         int sourceItemCount = sourceItems.size()
@@ -106,7 +107,7 @@ class DataFetcherUtils {
         relFieldName = relKeyMap.values().asList().get(0)
 
         for (Object sourceItem in sourceItems) {
-            Object relFieldValue = ((Map) sourceItem).get(relParentFieldName)
+            Object relFieldValue = ((Map<String, Object>) sourceItem).get(relParentFieldName)
             if (relFieldValue != null) ids.add(relFieldValue)
         }
 
@@ -114,7 +115,7 @@ class DataFetcherUtils {
         return ef
     }
 
-    private static EntityFind patchWithTupleOrCondition(EntityFind ef, List<Object> sourceItems, Map<String, String> relKeyMap, ExecutionContext ec) {
+    private static EntityFind patchWithTupleOrCondition(EntityFind ef, LinkedHashMap sourceItems, Map<String, String> relKeyMap, ExecutionContext ec) {
         EntityCondition orCondition = null
 
         for (Object object in sourceItems) {
@@ -136,7 +137,7 @@ class DataFetcherUtils {
         return ef
     }
 
-    static EntityFind patchWithConditions(EntityFind ef, List<Object> sourceItems, Map<String, String> relKeyMap, ExecutionContext ec) {
+    static EntityFind patchWithConditions(EntityFind ef, LinkedHashMap sourceItems, Map<String, String> relKeyMap, ExecutionContext ec) {
         int relKeyCount = relKeyMap.size()
         if (relKeyCount == 1) {
             patchWithInCondition(ef, sourceItems, relKeyMap)
@@ -146,7 +147,7 @@ class DataFetcherUtils {
         return ef
     }
 
-    static EntityFind patchFindOneWithConditions(EntityFind ef, Map sourceItem, Map<String, String> relKeyMap, ExecutionContext ec) {
+    static EntityFind patchFindOneWithConditions(EntityFind ef, LinkedHashMap sourceItem, Map<String, String> relKeyMap, ExecutionContext ec) {
         if (relKeyMap.size() == 0) return ef
         for (Map.Entry<String, String> entry in relKeyMap.entrySet()) {
             String relParentFieldName = entry.getKey()
@@ -156,7 +157,7 @@ class DataFetcherUtils {
         return ef
     }
     
-    static boolean matchParentByRelKeyMap(Map<String, Object> sourceItem, Map<String, Object> self, Map<String, String> relKeyMap) {
+    static boolean matchParentByRelKeyMap(LinkedHashMap sourceItem, Map<String, Object> self, Map<String, String> relKeyMap) {
         int found = -1
         for (Map.Entry<String, String> entry in relKeyMap.entrySet()) {
             found = (found == -1) ? (sourceItem.get(entry.key) == self.get(entry.value) ? 1 : 0)

@@ -65,20 +65,21 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
 
     @Override
     Object fetch(DataFetchingEnvironment environment) {
-//        logger.info("source     - ${environment.source}")
-//        logger.info("arguments  - ${environment.arguments}")
-//        logger.info("context    - ${environment.context}")
-//        logger.info("fields     - ${environment.fields}")
-//        logger.info("fieldType  - ${environment.fieldType}")
-//        logger.info("parentType - ${environment.parentType}")
-//        logger.info("schema     - ${environment.graphQLSchema}")
-//        logger.info("relKeyMap  - ${relKeyMap}")
-//        logger.info("interfaceEntityName    - ${interfaceEntityName}")
+        logger.info("source     - ${environment.source}")
+        logger.info("arguments  - ${environment.arguments}")
+        logger.info("context    - ${environment.context}")
+        logger.info("fields     - ${environment.fields}")
+        logger.info("fieldType  - ${environment.fieldType}")
+        logger.info("parentType - ${environment.parentType}")
+        logger.info("schema     - ${environment.graphQLSchema}")
+        logger.info("relKeyMap  - ${relKeyMap}")
+        logger.info("interfaceEntityName    - ${interfaceEntityName}")
 
         long startTime = System.currentTimeMillis()
         ExecutionContext ec = environment.context as ExecutionContext
 
-        int sourceItemCount = ((List) environment.source).size()
+        List<LinkedHashMap> environmentSource = [environment.source as LinkedHashMap]
+        int sourceItemCount = environmentSource.size()
         int relKeyCount = relKeyMap.size()
 
         if (sourceItemCount == 0)
@@ -127,12 +128,11 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
                             .useCache(useCache)
                             .searchFormMap(inputFieldsMap, null, null, null, false)
 
-                    DataFetcherUtils.patchWithConditions(efConcrete, environment.source as List, relKeyMap, ec)
+                    DataFetcherUtils.patchWithConditions(efConcrete, environmentSource[0], relKeyMap, ec)
                     jointValueList = mergeWithInterfaceValue(ec, efConcrete.list().getValueMapList())
 
                 } else {
-                    ((List) environment.source).eachWithIndex { Object object, int index ->
-                        Map sourceItem = (Map) object
+                    environmentSource.eachWithIndex { LinkedHashMap sourceItem, int index ->
                         EntityFind efConcrete = ec.entity.find(entityName).useCache(useCache)
                                 .searchFormMap(inputFieldsMap, null, null, null, false)
                         DataFetcherUtils.patchFindOneWithConditions(efConcrete, sourceItem, relKeyMap, ec)
@@ -141,8 +141,7 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
                     }
                 }
 
-                ((List) environment.source).eachWithIndex { Object object, int index ->
-                    Map sourceItem = (Map) object
+                environmentSource.eachWithIndex { LinkedHashMap sourceItem, int index ->
 
                     jointOneMap = (relKeyCount == 0 ? (jointValueList.size() > 0 ? jointValueList[0] : null) :
                             jointValueList.find { Object it -> DataFetcherUtils.matchParentByRelKeyMap(sourceItem, it as Map<String, Object>, relKeyMap) }) as Map<String, Object>
@@ -167,12 +166,11 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
                             .searchFormMap(inputFieldsMap, null, null, null, true)
 
                     GraphQLSchemaUtil.addPeriodValidArguments(ec, efConcrete, environment.arguments)
-                    DataFetcherUtils.patchWithConditions(efConcrete, environment.source as List, relKeyMap, ec)
+                    DataFetcherUtils.patchWithConditions(efConcrete, environmentSource[0], relKeyMap, ec)
 
                     List<Map<String, Object>> jointValueList = mergeWithInterfaceValue(ec, efConcrete.list().getValueMapList())
 
-                    ((List) environment.source).eachWithIndex { Object object, int index ->
-                        Map sourceItem = (Map) object
+                    environmentSource.eachWithIndex { LinkedHashMap sourceItem, int index ->
                         List<Map<String, Object>> matchedJointValueList
                         if (relKeyCount == 0) {
                             matchedJointValueList = jointValueList

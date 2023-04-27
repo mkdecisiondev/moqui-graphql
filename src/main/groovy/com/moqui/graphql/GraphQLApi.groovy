@@ -15,6 +15,7 @@ package com.moqui.graphql
 
 import com.moqui.impl.service.GraphQLSchemaDefinition
 import graphql.ExceptionWhileDataFetching
+import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQL
 import graphql.GraphQLError
