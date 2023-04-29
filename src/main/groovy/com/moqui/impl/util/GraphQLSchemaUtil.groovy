@@ -46,17 +46,17 @@ import org.slf4j.LoggerFactory
 import java.sql.Timestamp
 import java.util.concurrent.atomic.AtomicBoolean
 
-import static graphql.Scalars.GraphQLBigDecimal
-import static graphql.Scalars.GraphQLBigInteger
 import static graphql.Scalars.GraphQLBoolean
-import static graphql.Scalars.GraphQLByte
-import static graphql.Scalars.GraphQLChar
 import static graphql.Scalars.GraphQLFloat
 import static graphql.Scalars.GraphQLID
 import static graphql.Scalars.GraphQLInt
-import static graphql.Scalars.GraphQLLong
-import static graphql.Scalars.GraphQLShort
 import static graphql.Scalars.GraphQLString
+import static graphql.scalars.ExtendedScalars.GraphQLChar
+import static graphql.scalars.ExtendedScalars.GraphQLByte
+import static graphql.scalars.ExtendedScalars.GraphQLLong
+import static graphql.scalars.ExtendedScalars.GraphQLShort
+import static graphql.scalars.ExtendedScalars.GraphQLBigDecimal
+import static graphql.scalars.ExtendedScalars.GraphQLBigInteger
 import static com.moqui.graphql.Scalars.GraphQLTimestamp
 
 import static org.moqui.impl.entity.EntityDefinition.MasterDefinition

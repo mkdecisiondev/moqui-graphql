@@ -28,6 +28,8 @@ import graphql.schema.GraphQLInputObjectType
 import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLList
+import graphql.schema.GraphQLNamedInputType
+import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLNonNull
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
@@ -36,11 +38,10 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeReference
 import graphql.schema.GraphQLUnionType
-import graphql.schema.SchemaUtil
+import graphql.schema.impl.SchemaUtil
 import graphql.schema.TypeResolver
 import graphql.TypeResolutionEnvironment
 import groovy.transform.CompileStatic
-import org.moqui.context.ExecutionContext
 import org.moqui.context.ExecutionContextFactory
 import org.moqui.impl.context.ExecutionContextFactoryImpl
 import org.moqui.impl.entity.EntityDefinition
@@ -53,9 +54,9 @@ import org.slf4j.LoggerFactory
 import java.lang.reflect.Method
 
 import static graphql.Scalars.GraphQLBoolean
-import static graphql.Scalars.GraphQLChar
 import static graphql.Scalars.GraphQLInt
 import static graphql.Scalars.GraphQLString
+import static graphql.scalars.ExtendedScalars.GraphQLChar
 
 @CompileStatic
 class GraphQLSchemaDefinition {
@@ -460,7 +461,7 @@ class GraphQLSchemaDefinition {
                             String inputFieldIsList = GraphQLSchemaUtil.getShortJavaType(parmNode.attribute("type")) == "List" ? "true" : "false"
                             GraphQLInputType fieldInputType =  getInputTypeRecursiveInSD(parmNode, inputTypeName)
 
-                            InputObjectFieldDefinition inputFieldDef = new InputObjectFieldDefinition(parmName, fieldInputType.name, defaultValue, "",
+                            InputObjectFieldDefinition inputFieldDef = new InputObjectFieldDefinition(parmName, ((GraphQLNamedInputType)fieldInputType).name, defaultValue, "",
                                     inputFieldNonNull, inputFieldIsList, "false")
                             inputFieldMap.put(parmName, inputFieldDef)
                         }
@@ -794,8 +795,8 @@ class GraphQLSchemaDefinition {
     }
 
     private static GraphQLOutputType getConnectionObjectType(GraphQLOutputType rawType, String nonNull, String listItemNonNull) {
-        String connectionTypeName = rawType.name + "Connection"
-        String connectionTypeKey = rawType.name
+        String connectionTypeName = ((GraphQLNamedOutputType)rawType).name + "Connection"
+        String connectionTypeKey = ((GraphQLNamedOutputType)rawType).name
         if ("true".equals(nonNull)) connectionTypeKey = connectionTypeKey + NON_NULL_SUFFIX
         connectionTypeKey = connectionTypeKey + IS_LIST_SUFFIX
         if ("true".equals(listItemNonNull)) connectionTypeKey = connectionTypeKey + LIST_ITEM_NON_NULL_SUFFIX
@@ -822,7 +823,7 @@ class GraphQLSchemaDefinition {
 
     private static GraphQLFieldDefinition getEdgesField(GraphQLOutputType rawType, String nonNull, String listItemNonNull) {
         String edgesFieldName = "edges"
-        String edgeFieldKey = edgesFieldName + KEY_SPLITTER + rawType.name + "Edge"
+        String edgeFieldKey = edgesFieldName + KEY_SPLITTER + ((GraphQLNamedOutputType)rawType).name + "Edge"
         if ("true".equals(nonNull)) edgeFieldKey = edgeFieldKey + NON_NULL_SUFFIX
         edgeFieldKey = edgeFieldKey + IS_LIST_SUFFIX
         if ("true".equals(listItemNonNull)) edgeFieldKey = edgeFieldKey + LIST_ITEM_NON_NULL_SUFFIX
@@ -843,7 +844,7 @@ class GraphQLSchemaDefinition {
 
     // Should not be invoked, but getEdgesField
     private static GraphQLOutputType getEdgesObjectType(GraphQLOutputType rawType, String nonNull, String listItemNonNull) {
-        String edgeRawTypeName = rawType.name + "Edge"
+        String edgeRawTypeName = ((GraphQLNamedOutputType)rawType).name + "Edge"
         String edgesTypeKey = edgeRawTypeName
         if ("true".equals(nonNull)) edgesTypeKey = edgesTypeKey + NON_NULL_SUFFIX
         edgesTypeKey = edgesTypeKey + IS_LIST_SUFFIX
@@ -866,7 +867,7 @@ class GraphQLSchemaDefinition {
         edgesType = edgeRawType
 
         if ("true".equals(listItemNonNull)) edgesType = new GraphQLNonNull(edgesType)
-        edgesType = new GraphQLList(edgesType)
+        edgesType = new GraphQLList((GraphQLType)edgesType)
         if ("true".equals(nonNull)) edgesType = new GraphQLNonNull(edgesType)
 
         if (!edgesTypeKey.equals(edgeRawTypeName)) {
@@ -895,7 +896,7 @@ class GraphQLSchemaDefinition {
     }
 
     private static GraphQLOutputType getGraphQLOutputType(GraphQLOutputType rawType, String nonNull, String isList, String listItemNonNull) {
-        String outputTypeKey = rawType.name
+        String outputTypeKey = ((GraphQLNamedOutputType)rawType).name
         if ("true".equals(nonNull)) outputTypeKey = outputTypeKey + NON_NULL_SUFFIX
         if ("true".equals(isList)) {
             outputTypeKey = outputTypeKey + IS_LIST_SUFFIX
@@ -912,7 +913,7 @@ class GraphQLSchemaDefinition {
         }
         if ("true".equals(nonNull)) wrappedType = new GraphQLNonNull(wrappedType)
 
-        if (!outputTypeKey.equals(rawType.name)) graphQLOutputTypeMap.put(outputTypeKey, wrappedType)
+        if (!outputTypeKey.equals(((GraphQLNamedOutputType)rawType).name)) graphQLOutputTypeMap.put(outputTypeKey, wrappedType)
 
         return wrappedType
     }
@@ -950,7 +951,7 @@ class GraphQLSchemaDefinition {
 
     private static GraphQLFieldDefinition getGraphQLFieldWithNoArgs(String name, GraphQLOutputType rawType, String nonNull, String isList,
                                                                     String listItemNonNull, String description, BaseDataFetcher dataFetcher) {
-        String fieldKey = getFieldKey(name, rawType.name, nonNull, isList, listItemNonNull)
+        String fieldKey = getFieldKey(name, ((GraphQLNamedOutputType)rawType).name, nonNull, isList, listItemNonNull)
 
         GraphQLFieldDefinition field = graphQLFieldMap.get(fieldKey)
         if (field != null) return field
@@ -1035,7 +1036,7 @@ class GraphQLSchemaDefinition {
         return getGraphQLInputType(rawType, nonNull, isList, listItemNonNull)
     }
     private static GraphQLInputType getGraphQLInputType(GraphQLInputType rawType, String nonNull, String isList, String listItemNonNull) {
-        String inputTypeKey = rawType.name
+        String inputTypeKey = ((GraphQLNamedInputType)rawType).name
         if ("true".equals(nonNull)) inputTypeKey = inputTypeKey + NON_NULL_SUFFIX
         if ("true".equals(isList)) {
             inputTypeKey = inputTypeKey + IS_LIST_SUFFIX
@@ -1052,7 +1053,7 @@ class GraphQLSchemaDefinition {
         }
         if ("true".equals(nonNull)) wrappedType = new GraphQLNonNull(wrappedType)
 
-        if (!inputTypeKey.equals(rawType.name)) graphQLInputTypeMap.put(inputTypeKey, wrappedType)
+        if (!inputTypeKey.equals(((GraphQLNamedInputType)rawType).name)) graphQLInputTypeMap.put(inputTypeKey, wrappedType)
 
         return wrappedType
     }
