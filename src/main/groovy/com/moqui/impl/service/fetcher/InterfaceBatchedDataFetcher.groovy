@@ -128,12 +128,14 @@ class InterfaceBatchedDataFetcher extends BaseDataFetcher {
 
     @Override
     Object fetch(DataFetchingEnvironment environment) {
+//        logger.info("---- running interface data fetcher on primary field [${primaryField}] operation [${operation}] ...")
 //        logger.info("source     - ${environment.source}")
 //        logger.info("arguments  - ${environment.arguments}")
 //        logger.info("context    - ${environment.context}")
 //        logger.info("fields     - ${environment.fields}")
 //        logger.info("fieldType  - ${environment.fieldType}")
 //        logger.info("parentType - ${environment.parentType}")
+//        logger.info("schema     - ${environment.graphQLSchema}")
 //        logger.info("relKeyMap  - ${relKeyMap}")
 
         long startTime = System.currentTimeMillis()
@@ -290,7 +292,12 @@ class InterfaceBatchedDataFetcher extends BaseDataFetcher {
                 logger.info("ran interface batched data fetcher with operation [${operation}] use cache ${useCache} in ${runTime}ms")
             }
             // ASA: when the operation is one, the result should be the actual object and not a list with that object
-            return operation == "one" ? resultList.get(0) : resultList
+//            logger.info("resultList     - ${resultList}")
+            if (operation == "one" || (!(environment.source instanceof List) && operation == "list")) {
+                return resultList.empty ? null : resultList.get(0)
+            } else {
+                return resultList
+            }
         }
         finally {
             if (loggedInAnonymous) ((UserFacadeImpl) ec.getUser()).logoutAnonymousOnly()

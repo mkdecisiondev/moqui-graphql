@@ -65,6 +65,7 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
 
     @Override
     Object fetch(DataFetchingEnvironment environment) {
+//        logger.info("---- running entity data fetcher for entity [${entityName}] operation [${operation}] ...")
 //        logger.info("source     - ${environment.source}")
 //        logger.info("arguments  - ${environment.arguments}")
 //        logger.info("context    - ${environment.context}")
@@ -256,12 +257,17 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
 
             long runTime = System.currentTimeMillis() - startTime
             if (runTime > GraphQLApi.RUN_TIME_WARN_THRESHOLD) {
-                logger.warn("ran batched data fetcher entity for entity [${entityName}] with operation [${operation}], use cache [${useCache}] in ${runTime}ms")
+                logger.warn("ran entity data fetcher for entity [${entityName}] with operation [${operation}], use cache [${useCache}] in ${runTime}ms")
             } else {
-                logger.info("ran batched data fetcher entity for entity [${entityName}] with operation [${operation}], use cache [${useCache}] in ${runTime}ms")
+                logger.info("ran entity data fetcher entity for entity [${entityName}] with operation [${operation}], use cache [${useCache}] in ${runTime}ms")
             }
             // ASA: when the operation is one, the result should be the actual object and not a list with one object
-            return operation == "one" ? resultList.get(0) : resultList
+//            logger.info("resultList     - ${resultList}")
+            if (operation == "one" || (!(environment.source instanceof List) && operation == "list")) {
+                return resultList.empty ? null : resultList.get(0)
+            } else {
+                return resultList
+            }
         }
         finally {
             if (loggedInAnonymous) ((UserFacadeImpl) ec.getUser()).logoutAnonymousOnly()

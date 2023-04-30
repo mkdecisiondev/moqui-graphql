@@ -48,6 +48,16 @@ class ServiceDataFetcher extends BaseDataFetcher {
 
     @Override
     Object fetch(DataFetchingEnvironment environment) {
+//        logger.info("---- running service data fetcher on service [${serviceName}] ...")
+//        logger.info("source     - ${environment.source}")
+//        logger.info("arguments  - ${environment.arguments}")
+//        logger.info("context    - ${environment.context}")
+//        logger.info("fields     - ${environment.fields}")
+//        logger.info("fieldType  - ${environment.fieldType}")
+//        logger.info("parentType - ${environment.parentType}")
+//        logger.info("schema     - ${environment.graphQLSchema}")
+//        logger.info("relKeyMap  - ${relKeyMap}")
+
         Long startTime = System.currentTimeMillis()
         ExecutionContext ec = environment.context as ExecutionContext
 
@@ -102,6 +112,7 @@ class ServiceDataFetcher extends BaseDataFetcher {
             } else {
                 logger.info("ran data fetcher service [${serviceName}] in ${runTime}ms")
             }
+//            logger.info("result     - ${result}")
             return result
         } finally {
             if (loggedInAnonymous) ((UserFacadeImpl) ec.getUser()).logoutAnonymousOnly()
