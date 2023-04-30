@@ -1130,12 +1130,18 @@ class GraphQLSchemaDefinition {
             interfaceTypeBuilder.typeResolver(new TypeResolver() {
                 @Override
                 GraphQLObjectType getType(TypeResolutionEnvironment env) {
+                    // ASA: the environment object may be a Map or a List and the value may actually be null
                     Object object = env.getObject()
-                    String resolverFieldValue = ((Map) object).get(interfaceTypeDef.resolverField)
-                    String resolvedTypeName = interfaceTypeDef.resolverMap.get(resolverFieldValue)
-
-                    GraphQLObjectType resolvedType = graphQLObjectTypeMap.get(resolvedTypeName)
-                    if (resolvedType == null) resolvedType = graphQLObjectTypeMap.get(interfaceTypeDef.defaultResolvedTypeName)
+                    Map valueMap = (object instanceof List ? object.get(0) : object) as Map
+                    GraphQLObjectType resolvedType = null
+                    if (valueMap) {
+                        String resolverFieldValue = valueMap.get(interfaceTypeDef.resolverField)
+                        String resolvedTypeName = interfaceTypeDef.resolverMap.get(resolverFieldValue)
+                        resolvedType = graphQLObjectTypeMap.get(resolvedTypeName)
+                    }
+                    if (resolvedType == null) {
+                        resolvedType = graphQLObjectTypeMap.get(interfaceTypeDef.defaultResolvedTypeName)
+                    }
                     return resolvedType
                 }
             })

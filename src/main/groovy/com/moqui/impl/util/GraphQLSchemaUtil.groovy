@@ -455,7 +455,9 @@ class GraphQLSchemaUtil {
 
 
     static boolean requirePagination(DataFetchingEnvironment environment) {
-        List<Map> sources = (List<Map>) environment.source
+        // ASA: BatchedExecutionStrategy used to populate the environment source field as a List, AsyncExecutionStrategy
+        // does not guarantee that anymore so we create a singleton list if it's a map
+        List<Map> sources = (environment.source instanceof Map ? Collections.singletonList(environment.source) : environment.source) as List<Map>
 
         Map<String, Object> arguments = (Map) environment.arguments
         List<Field> fields = (List) environment.fields
@@ -570,7 +572,11 @@ class GraphQLSchemaUtil {
                 fromFieldName = prefix + "FromDate"
                 thruFieldName = prefix + "ThruDate"
             }
-            ef.condition(ec.entity.conditionFactory.makeConditionDate(fromFieldName, thruFieldName, ec.user.nowTimestamp))
+            // ASA: added this condition because of mk.account.payment.PaymentPlan entity which has a fromDate field
+            // but not a thruDate field which results in an entity find exception
+            if (arguments.containsKey(fromFieldName) && arguments.containsKey(thruFieldName)) {
+                ef.condition(ec.entity.conditionFactory.makeConditionDate(fromFieldName, thruFieldName, ec.user.nowTimestamp))
+            }
         }
     }
 

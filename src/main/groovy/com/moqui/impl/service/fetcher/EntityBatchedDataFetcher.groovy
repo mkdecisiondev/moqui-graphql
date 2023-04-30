@@ -78,7 +78,10 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
         long startTime = System.currentTimeMillis()
         ExecutionContext ec = environment.context as ExecutionContext
 
-        int sourceItemCount = ((List) environment.source).size()
+        // ASA: BatchedExecutionStrategy used to populate the environment source field as a List, AsyncExecutionStrategy
+        // does not guarantee that anymore so we create a singleton list if it's a map
+        List sourceList = environment.source instanceof List ? (List) environment.source : Collections.singletonList(environment.source)
+        int sourceItemCount = sourceList.size()
         int relKeyCount = relKeyMap.size()
 
         if (sourceItemCount == 0)
@@ -127,11 +130,11 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
                             .useCache(useCache)
                             .searchFormMap(inputFieldsMap, null, null, null, false)
 
-                    DataFetcherUtils.patchWithConditions(efConcrete, environment.source as List, relKeyMap, ec)
+                    DataFetcherUtils.patchWithConditions(efConcrete, sourceList, relKeyMap, ec)
                     jointValueList = mergeWithInterfaceValue(ec, efConcrete.list().getValueMapList())
 
                 } else {
-                    ((List) environment.source).eachWithIndex { Object object, int index ->
+                    sourceList.eachWithIndex { Object object, int index ->
                         Map sourceItem = (Map) object
                         EntityFind efConcrete = ec.entity.find(entityName).useCache(useCache)
                                 .searchFormMap(inputFieldsMap, null, null, null, false)
@@ -141,7 +144,7 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
                     }
                 }
 
-                ((List) environment.source).eachWithIndex { Object object, int index ->
+                sourceList.eachWithIndex { Object object, int index ->
                     Map sourceItem = (Map) object
 
                     jointOneMap = (relKeyCount == 0 ? (jointValueList.size() > 0 ? jointValueList[0] : null) :
@@ -167,11 +170,11 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
                             .searchFormMap(inputFieldsMap, null, null, null, true)
 
                     GraphQLSchemaUtil.addPeriodValidArguments(ec, efConcrete, environment.arguments)
-                    DataFetcherUtils.patchWithConditions(efConcrete, environment.source as List, relKeyMap, ec)
+                    DataFetcherUtils.patchWithConditions(efConcrete, sourceList, relKeyMap, ec)
 
                     List<Map<String, Object>> jointValueList = mergeWithInterfaceValue(ec, efConcrete.list().getValueMapList())
 
-                    ((List) environment.source).eachWithIndex { Object object, int index ->
+                    sourceList.eachWithIndex { Object object, int index ->
                         Map sourceItem = (Map) object
                         List<Map<String, Object>> matchedJointValueList
                         if (relKeyCount == 0) {
@@ -198,7 +201,7 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
                     }
                 } else { // Used pagination or field selection set includes pageInfo
 //                    logger.info("---- require pagination ----")
-                    ((List) environment.source).eachWithIndex { Object object, int index ->
+                    sourceList.eachWithIndex { Object object, int index ->
                         Map sourceItem = (Map) object
                         EntityFind ef = ec.entity.find(entityName)
                                 .searchFormMap(inputFieldsMap, null, null, null, true)
@@ -253,11 +256,12 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
 
             long runTime = System.currentTimeMillis() - startTime
             if (runTime > GraphQLApi.RUN_TIME_WARN_THRESHOLD) {
-                logger.warn("run batched data fetcher entity for entity [${entityName}] with operation [${operation}], use cache [${useCache}] in ${runTime}ms")
+                logger.warn("ran batched data fetcher entity for entity [${entityName}] with operation [${operation}], use cache [${useCache}] in ${runTime}ms")
             } else {
-                logger.info("run batched data fetcher entity for entity [${entityName}] with operation [${operation}], use cache [${useCache}] in ${runTime}ms")
+                logger.info("ran batched data fetcher entity for entity [${entityName}] with operation [${operation}], use cache [${useCache}] in ${runTime}ms")
             }
-            return resultList
+            // ASA: when the operation is one, the result should be the actual object and not a list with one object
+            return operation == "one" ? resultList.get(0) : resultList
         }
         finally {
             if (loggedInAnonymous) ((UserFacadeImpl) ec.getUser()).logoutAnonymousOnly()

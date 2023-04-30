@@ -139,7 +139,10 @@ class InterfaceBatchedDataFetcher extends BaseDataFetcher {
         long startTime = System.currentTimeMillis()
         ExecutionContext ec = environment.context as ExecutionContext
 
-        int sourceItemCount = ((List) environment.source).size()
+        // ASA: BatchedExecutionStrategy used to populate the environment source field as a List, AsyncExecutionStrategy
+        // does not guarantee that anymore so we create a singleton list if it's a map
+        List sourceList = environment.source instanceof List ? (List) environment.source : Collections.singletonList(environment.source)
+        int sourceItemCount = sourceList.size()
         int relKeyCount = relKeyMap.size()
 
         if (sourceItemCount == 0)
@@ -171,11 +174,11 @@ class InterfaceBatchedDataFetcher extends BaseDataFetcher {
 //                logger.warn("running one operation")
                 List<Map<String, Object>> interfaceValueList
                 if (!useCache) {
-                    interfaceValueList = defaultFetcher.searchFormMap((List) environment.source, inputFieldsMap, environment)
+                    interfaceValueList = defaultFetcher.searchFormMap(sourceList, inputFieldsMap, environment)
                     mergeWithConcreteValue(interfaceValueList)
                 } else {
-                    interfaceValueList = new ArrayList<>(((List) environment.source).size())
-                    ((List) environment.source).eachWithIndex { Object object, int index ->
+                    interfaceValueList = new ArrayList<>(sourceList.size())
+                    sourceList.eachWithIndex { Object object, int index ->
                         Map sourceItem = (Map) object
                         Map<String, Object> interfaceValue = defaultFetcher.searchFormMap(sourceItem, inputFieldsMap, environment)
 
@@ -186,7 +189,7 @@ class InterfaceBatchedDataFetcher extends BaseDataFetcher {
                     }
                 }
 
-                ((List) environment.source).eachWithIndex { Object object, int index ->
+                sourceList.eachWithIndex { Object object, int index ->
                     Map sourceItem = (Map) object
 
                     jointOneMap = relKeyCount == 0 ? (interfaceValueList.size() > 0 ? interfaceValueList[0] : null) :
@@ -205,7 +208,7 @@ class InterfaceBatchedDataFetcher extends BaseDataFetcher {
                 if (!GraphQLSchemaUtil.requirePagination(environment)) {
 //                    logger.warn("running list with batch")
                     inputFieldsMap.put("pageNoLimit", "true")
-                    List<Map<String, Object>> interfaceValueList = defaultFetcher.searchFormMap((List) environment.source, inputFieldsMap, environment)
+                    List<Map<String, Object>> interfaceValueList = defaultFetcher.searchFormMap(sourceList, inputFieldsMap, environment)
 
                     if (!useCache) {
                         mergeWithConcreteValue(interfaceValueList)
@@ -213,7 +216,7 @@ class InterfaceBatchedDataFetcher extends BaseDataFetcher {
                         interfaceValueList = interfaceValueList.collect { Map<String, Object> interfaceValue -> mergeWithConcreteValue(interfaceValue) }
                     }
 
-                    ((List) environment.source).eachWithIndex { Object object, int index ->
+                    sourceList.eachWithIndex { Object object, int index ->
                         Map sourceItem = (Map) object
                         List<Map<String, Object>> jointOneList = relKeyCount == 0 ? interfaceValueList :
                             interfaceValueList.findAll { Map<String, Object> it -> matchParentByRelKeyMap(sourceItem, it, relKeyMap) }
@@ -233,7 +236,7 @@ class InterfaceBatchedDataFetcher extends BaseDataFetcher {
                     }
                 } else { // Used pagination or field selection set includes pageInfo
 //                    logger.warn("running list with no batch!!!!")
-                    ((List) environment.source).eachWithIndex { Object object, int index ->
+                    sourceList.eachWithIndex { Object object, int index ->
                         Map sourceItem = (Map) object
 
                         Map<String, Object> interfaceValueMap = defaultFetcher.searchFormMapWithPagination([sourceItem], inputFieldsMap, environment)
@@ -282,11 +285,12 @@ class InterfaceBatchedDataFetcher extends BaseDataFetcher {
             }
             long runTime = System.currentTimeMillis() - startTime
             if (runTime > GraphQLApi.RUN_TIME_WARN_THRESHOLD) {
-                logger.warn("run interface bached data fetcher with operation [${operation}] use cache ${useCache} in ${runTime}ms")
+                logger.warn("ran interface batched data fetcher with operation [${operation}] use cache ${useCache} in ${runTime}ms")
             } else {
-                logger.info("run interface bached data fetcher with operation [${operation}] use cache ${useCache} in ${runTime}ms")
+                logger.info("ran interface batched data fetcher with operation [${operation}] use cache ${useCache} in ${runTime}ms")
             }
-            return resultList
+            // ASA: when the operation is one, the result should be the actual object and not a list with that object
+            return operation == "one" ? resultList.get(0) : resultList
         }
         finally {
             if (loggedInAnonymous) ((UserFacadeImpl) ec.getUser()).logoutAnonymousOnly()
