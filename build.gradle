@@ -31,7 +31,8 @@ dependencies {
     implementation project(':framework')
     implementation 'org.elasticsearch.client:transport:7.5.1'
 
-    implementation 'com.graphql-java:graphql-java:4.2'
+    implementation 'com.graphql-java:graphql-java:20.2'
+    implementation 'com.graphql-java:graphql-java-extended-scalars:20.2'
     implementation 'org.antlr:antlr4-runtime:4.5.3'
 
     testImplementation project(':framework').configurations.testImplementation.allDependencies

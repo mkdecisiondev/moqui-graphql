@@ -120,7 +120,14 @@ class ElasticSearchDataFetcher extends BaseDataFetcher {
 
     @Override
     Object fetch(DataFetchingEnvironment environment) {
-        logger.info("---- running data fetcher elastic search on index [${indexName}] and document type ${dataDocumentId} ...")
+//        logger.info("---- running elastic search data fetcher on index [${indexName}] and document type [${dataDocumentId}] ...")
+//        logger.info("source     - ${environment.source}")
+//        logger.info("arguments  - ${environment.arguments}")
+//        logger.info("context    - ${environment.context}")
+//        logger.info("fields     - ${environment.fields}")
+//        logger.info("fieldType  - ${environment.fieldType}")
+//        logger.info("parentType - ${environment.parentType}")
+//        logger.info("schema     - ${environment.graphQLSchema}")
 
         ExecutionContext ec = environment.context as ExecutionContext
         boolean loggedInAnonymous = false
