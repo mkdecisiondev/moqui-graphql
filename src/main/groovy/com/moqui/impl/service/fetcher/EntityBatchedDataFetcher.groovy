@@ -193,7 +193,7 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
                             DataFetcherUtils.localize(matchedJointOneMap, actualLocalizedFields, ec)
                             edgesData.put("cursor", cursor)
                             edgesData.put("node", matchedJointOneMap)
-                            return edgesData
+                            return edgesData as Map
                         }
 
                         resultMap = new HashMap<>(1)
@@ -245,7 +245,7 @@ class EntityBatchedDataFetcher extends BaseEntityDataFetcher {
                                 DataFetcherUtils.localize(jointOneMap, actualLocalizedFields, ec)
                                 edgesData.put("cursor", cursor)
                                 edgesData.put("node", jointOneMap)
-                                return edgesData
+                                return edgesData as Map
                             }
                         }
                         resultMap.put("edges", edgesDataList)
