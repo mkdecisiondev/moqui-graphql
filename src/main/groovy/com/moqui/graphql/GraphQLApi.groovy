@@ -15,10 +15,10 @@ package com.moqui.graphql
 
 import com.moqui.impl.service.GraphQLSchemaDefinition
 import graphql.ExceptionWhileDataFetching
+import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQL
 import graphql.GraphQLError
-import graphql.execution.batched.BatchedExecutionStrategy
 import graphql.language.Document
 import graphql.parser.Parser
 import groovy.transform.CompileStatic
@@ -67,7 +67,13 @@ class GraphQLApi {
     GraphQLResult execute(String requestString, String operationName, Object context, Map<String, Object> arguments) {
         if ((System.currentTimeMillis() - lastLoadTime) > graphQLTTI) loadSchemaNode()
 
-        ExecutionResult executionResult = graphQL.execute("${requestString}", operationName, context, arguments)
+        ExecutionInput executionInput = ExecutionInput.newExecutionInput()
+                .query("${requestString}")
+                .operationName(operationName)
+                .context(context)
+                .variables(arguments)
+                .build()
+        ExecutionResult executionResult = graphQL.execute(executionInput)
         return new GraphQLResult(executionResult)
     }
 
@@ -113,7 +119,7 @@ class GraphQLApi {
             GraphQLSchemaDefinition.clearAllCachedGraphQLTypes()
 
             GraphQLSchemaDefinition schemaDef = new GraphQLSchemaDefinition(ecf, schemaNodeMap)
-            graphQL = new GraphQL(schemaDef.getSchema(), new BatchedExecutionStrategy())
+            graphQL = GraphQL.newGraphQL(schemaDef.getSchema()).build()
 
             lastLoadTime = System.currentTimeMillis()
             logger.info("Loaded GraphQL schema, in ${System.currentTimeMillis() - startTime}ms")

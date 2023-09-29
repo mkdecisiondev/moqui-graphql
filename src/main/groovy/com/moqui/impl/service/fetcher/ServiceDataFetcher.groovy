@@ -48,6 +48,16 @@ class ServiceDataFetcher extends BaseDataFetcher {
 
     @Override
     Object fetch(DataFetchingEnvironment environment) {
+//        logger.info("---- running service data fetcher on service [${serviceName}] ...")
+//        logger.info("source     - ${environment.source}")
+//        logger.info("arguments  - ${environment.arguments}")
+//        logger.info("context    - ${environment.context}")
+//        logger.info("fields     - ${environment.fields}")
+//        logger.info("fieldType  - ${environment.fieldType}")
+//        logger.info("parentType - ${environment.parentType}")
+//        logger.info("schema     - ${environment.graphQLSchema}")
+//        logger.info("relKeyMap  - ${relKeyMap}")
+
         Long startTime = System.currentTimeMillis()
         ExecutionContext ec = environment.context as ExecutionContext
 
@@ -66,7 +76,9 @@ class ServiceDataFetcher extends BaseDataFetcher {
                 GraphQLSchemaUtil.transformArguments(environment.arguments, inputFieldsMap)
             }
             else {
-                Map source = environment.source as Map<String, Object>
+                // ASA: BatchedExecutionStrategy used to populate the environment source field as a List,
+                // AsyncExecutionStrategy does not guarantee that anymore so we create a singleton list if it's a map
+                Map source = (environment.source instanceof List ? ((List) environment.source).get(0) : environment.source) as Map<String, Object>
                 GraphQLSchemaUtil.transformQueryServiceRelArguments(source, relKeyMap, inputFieldsMap)
                 GraphQLSchemaUtil.transformQueryServiceArguments(sd, environment.arguments, inputFieldsMap)
             }
@@ -96,10 +108,11 @@ class ServiceDataFetcher extends BaseDataFetcher {
 
             long runTime = System.currentTimeMillis() - startTime
             if (runTime > GraphQLApi.RUN_TIME_WARN_THRESHOLD) {
-                logger.warn("run data fetcher service [${serviceName}] in ${runTime}ms")
+                logger.warn("ran data fetcher service [${serviceName}] in ${runTime}ms")
             } else {
-                logger.info("run data fetcher service [${serviceName}] in ${runTime}ms")
+                logger.info("ran data fetcher service [${serviceName}] in ${runTime}ms")
             }
+//            logger.info("result     - ${result}")
             return result
         } finally {
             if (loggedInAnonymous) ((UserFacadeImpl) ec.getUser()).logoutAnonymousOnly()
