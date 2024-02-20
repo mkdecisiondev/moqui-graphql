@@ -29,7 +29,7 @@ repositories {
 
 dependencies {
     implementation project(':framework')
-    implementation ('org.elasticsearch.client:transport:7.17.9') {
+    implementation ('org.elasticsearch.client:transport:7.17.18') {
         exclude group: 'io.netty'
         exclude group: 'org.apache.logging.log4j'
     }
